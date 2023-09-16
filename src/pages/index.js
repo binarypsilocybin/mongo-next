@@ -1,11 +1,60 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from '@/styles/Home.module.css'
-
-const inter = Inter({ subsets: ['latin'] })
+import Head from "next/head";
+import { isValidElement, useEffect, useState } from "react";
+import Image from "next/image";
+import axios from "axios";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 export default function Home() {
+  const [input, setInput] = useState("");
+  const [inputTitle, setInputTitle] = useState("");
+  const [event, setEvent] = useState([]);
+  const [updateUI, setUpdateUI] = useState(false);
+  const [startDate, setStartDate] = useState(new Date());
+  const [numberOfitemsShown, setNumberOfItemsToShown] = useState(5);
+
+  useEffect(() => {
+    axios.get(`/api/get_event`).then((res) => {
+      setEvent(res.data);
+    });
+  }, [updateUI]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    axios
+      .post(`/api/set_event`, {
+        event: input,
+        date: startDate,
+        title: inputTitle,
+      })
+      .then((res) => {
+        setInput("");
+        setInputTitle("");
+        setUpdateUI((current) => !current);
+      })
+      .catch((err) => console.log(err));
+  };
+
+  const formatDate = (date) => {
+    const hello = new Date(date)
+      .toLocaleDateString("en-GB", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+      .split("/")
+      .reverse()
+      .join("-");
+    return hello;
+  };
+
+  event.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const handleClick = () => {
+    setNumberOfItemsToShown((prevValue) => prevValue + 2);
+  };
+
   return (
     <>
       <Head>
@@ -14,101 +63,66 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={`${styles.main} ${inter.className}`}>
-        <div className={styles.description}>
-          <p>
-            Get started by editing&nbsp;
-            <code className={styles.code}>src/pages/index.js</code>
-          </p>
-          <div>
-            <a
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              By{' '}
-              <Image
-                src="/vercel.svg"
-                alt="Vercel Logo"
-                className={styles.vercelLogo}
-                width={100}
-                height={24}
-                priority
-              />
-            </a>
+      <main>
+        <form onSubmit={handleSubmit}>
+          <div className="form-title">
+            <label for="title">Title</label>
+            <input
+              type="text"
+              value={inputTitle}
+              name="title"
+              onChange={(e) => setInputTitle(e.target.value)}
+            />
           </div>
-        </div>
+          <div className="form-description">
+            <label for="description">Description</label>
+            <input
+              type="text"
+              value={input}
+              name="description"
+              onChange={(e) => setInput(e.target.value)}
+            />
+          </div>
+          <div className="form-datepicker">
+            <label for="date">Date</label>
+            <DatePicker
+              name="date"
+              selected={startDate}
+              onChange={(date) => setStartDate(date)}
+            />
+          </div>
 
-        <div className={styles.center}>
-          <Image
-            className={styles.logo}
-            src="/next.svg"
-            alt="Next.js Logo"
-            width={180}
-            height={37}
-            priority
-          />
-        </div>
+          <button type="submit">Create</button>
+        </form>
+        <div className="list-container">
+          {event.slice(0, numberOfitemsShown).map((e) => (
+            <div className="list-card" key={e._id}>
+              <Image
+                src={e.image}
+                width={120}
+                height={100}
+                alt="Picture of the author"
+              />
+              <div className="text-content">
+                <div className="title-content">
+                  <h3>{e.title}</h3>
+                </div>
+                <div className="description-content">{e.event}</div>
+              </div>
 
-        <div className={styles.grid}>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2>
-              Docs <span>-&gt;</span>
-            </h2>
-            <p>
-              Find in-depth information about Next.js features and&nbsp;API.
-            </p>
-          </a>
-
-          <a
-            href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2>
-              Learn <span>-&gt;</span>
-            </h2>
-            <p>
-              Learn about Next.js in an interactive course with&nbsp;quizzes!
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2>
-              Templates <span>-&gt;</span>
-            </h2>
-            <p>
-              Discover and deploy boilerplate example Next.js&nbsp;projects.
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2>
-              Deploy <span>-&gt;</span>
-            </h2>
-            <p>
-              Instantly deploy your Next.js site to a shareable URL
-              with&nbsp;Vercel.
-            </p>
-          </a>
+              <div className="date-content">
+                <h4>Starts</h4>
+                {formatDate(e.date)}
+              </div>
+            </div>
+          ))}
+          {event.length > 5 && (
+            <button className="btn-showmore" onClick={handleClick}>
+              Show More
+            </button>
+          )}
         </div>
       </main>
     </>
-  )
+  );
 }
