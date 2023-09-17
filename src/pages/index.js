@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { isValidElement, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import axios from "axios";
 import DatePicker from "react-datepicker";
@@ -37,7 +37,7 @@ export default function Home() {
   };
 
   const formatDate = (date) => {
-    const hello = new Date(date)
+    const formatedDate = new Date(date)
       .toLocaleDateString("en-GB", {
         year: "numeric",
         month: "2-digit",
@@ -46,7 +46,7 @@ export default function Home() {
       .split("/")
       .reverse()
       .join("-");
-    return hello;
+    return formatedDate;
   };
 
   event.sort((a, b) => new Date(b.date) - new Date(a.date));
